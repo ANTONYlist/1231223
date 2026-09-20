@@ -752,6 +752,19 @@
 // IMPORTANT: Replace this with your deployed Cloudflare Worker URL.
 const WORKER_URL = "https://1231223.changreary87.workers.dev";
 
+function warmCheckout(invoiceUrl) {
+  if (!invoiceUrl) return;
+
+  console.log("[Checkout Warmup] Starting:", invoiceUrl);
+
+  const link = document.createElement("link");
+  link.rel = "prefetch";
+  link.as = "document";
+  link.href = invoiceUrl;
+
+  document.head.appendChild(link);
+}
+
 // The default Pickup Draft Order is created below; that POST also warms the Worker connection.
 
 const fulfillmentOptions =
@@ -801,13 +814,13 @@ if (cartItem) {
 }
 
 // Create a Draft Order through the Worker.
-async function createDraft(price, option, resolveCheckout = false) {
+async function createDraft(price, option) {
   const response = await fetch(WORKER_URL, {
     method: "POST",
     headers: {
       "Content-Type": "text/plain;charset=UTF-8"
     },
-    body: JSON.stringify({ price, option, resolveCheckout })
+    body: JSON.stringify({ price, option })
   });
 
   const data = await response.json();
@@ -833,7 +846,7 @@ const cartRevealTimer = new Promise(resolve => setTimeout(resolve, 1000));
 if (cartItem && WORKER_URL.startsWith("https://")) {
   const preloadPrice = Number(cartItem.price);
   if (Number.isFinite(preloadPrice) && preloadPrice > 0) {
-    defaultPickupDraftPromise = createDraft(preloadPrice, "pickup", true)
+    defaultPickupDraftPromise = createDraft(preloadPrice, "pickup")
       .catch(error => {
         console.warn("Default Pickup checkout preload failed:", error);
         return null;
@@ -907,7 +920,7 @@ document
         draft = await createDraft(price, option);
       }
 
-      const invoiceUrl = draft.checkoutUrl || draft.invoiceUrl;
+      const invoiceUrl = draft.invoiceUrl;
 
       // Clear the temporary browser cart only after Shopify checkout exists.
       localStorage.removeItem("reservation_cart");
