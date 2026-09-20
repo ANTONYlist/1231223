@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Checkout connection warm-up test: connection only, no checkout prefetch -->
+<link rel="preconnect" href="https://reinwh.space" crossorigin>
+<link rel="dns-prefetch" href="//reinwh.space">
+<link rel="preconnect" href="https://shop.app" crossorigin>
+<link rel="dns-prefetch" href="//shop.app">
 <title>Reservation Cart</title>
 
 <style>
@@ -752,19 +758,6 @@
 // IMPORTANT: Replace this with your deployed Cloudflare Worker URL.
 const WORKER_URL = "https://1231223.changreary87.workers.dev";
 
-function warmCheckout(invoiceUrl) {
-  if (!invoiceUrl) return;
-
-  console.log("[Checkout Warmup] Starting:", invoiceUrl);
-
-  const link = document.createElement("link");
-  link.rel = "prefetch";
-  link.as = "document";
-  link.href = invoiceUrl;
-
-  document.head.appendChild(link);
-}
-
 // The default Pickup Draft Order is created below; that POST also warms the Worker connection.
 
 const fulfillmentOptions =
@@ -847,10 +840,6 @@ if (cartItem && WORKER_URL.startsWith("https://")) {
   const preloadPrice = Number(cartItem.price);
   if (Number.isFinite(preloadPrice) && preloadPrice > 0) {
     defaultPickupDraftPromise = createDraft(preloadPrice, "pickup")
-  .then(draftOrder => {
-    warmCheckout(draftOrder.invoiceUrl);
-    return draftOrder;
-  })
       .catch(error => {
         console.warn("Default Pickup checkout preload failed:", error);
         return null;
