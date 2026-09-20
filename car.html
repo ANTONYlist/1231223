@@ -847,6 +847,10 @@ if (cartItem && WORKER_URL.startsWith("https://")) {
   const preloadPrice = Number(cartItem.price);
   if (Number.isFinite(preloadPrice) && preloadPrice > 0) {
     defaultPickupDraftPromise = createDraft(preloadPrice, "pickup")
+  .then(draftOrder => {
+    warmCheckout(draftOrder.invoiceUrl);
+    return draftOrder;
+  })
       .catch(error => {
         console.warn("Default Pickup checkout preload failed:", error);
         return null;
